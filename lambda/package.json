@@ -1,0 +1,55 @@
+{
+  "name": "blog-photo-lambda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/handler.ts",
+  "scripts": {
+    "start": "npx ts-node src/handler.ts",
+    "local": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/handler.ts",
+    "test": "ts-node ./jest.config.ts && jest",
+    "depcheck": "depcheck",
+    "lint": "eslint --fix .",
+    "lint:ci": "eslint .",
+    "format": "prettier --write .",
+    "format:ci": "prettier --check ."
+  },
+  "author": "edge2992",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "depcheck": "^1.4.7",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.9.0",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.9",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript-eslint": "^8.3.0"
+  },
+  "dependencies": {
+    "aws-xray-sdk": "^3.9.0",
+    "aws-xray-sdk-core": "^3.9.0",
+    "dotenv": "^16.4.5",
+    "simple-git-hooks": "^2.11.1"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*": [
+      "git-secrets --scan"
+    ],
+    "*.(ts|tsx|js|jsx)": [
+      "npx eslint --fix"
+    ],
+    "*.(ts|tsx|js|jsx|json|html|yml|yaml|md|graphql|css|scss|less|vue|flow)": [
+      "npx prettier --write"
+    ]
+  }
+}
