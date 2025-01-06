@@ -5,6 +5,7 @@ import {
   aws_lambda as lambda,
   aws_logs as logs,
   aws_s3 as s3,
+  aws_iam as iam,
 } from 'aws-cdk-lib';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
@@ -15,10 +16,25 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     super(scope, id, props);
 
     const bucket = new s3.Bucket(this, "UploadBucket", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
       versioned: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+
+    const presignedUrlPolicy = new iam.PolicyStatement({
+      actions: ["s3:PutObject"],
+      resources: [`${bucket.bucketArn}/*`],
+      principals: [new iam.AnyPrincipal()],
+      conditions: {
+        StringEquals: {
+          "s3:authType": "REST-QUERY-STRING",
+        }
+      }
+    });
+
+    bucket.addToResourcePolicy(presignedUrlPolicy);
+
     const bundlingAssetLambdaCode = lambda.Code.fromAsset(
       join(__dirname, "../lambda"),
       {
@@ -42,6 +58,9 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     const presignedUrlLambda = new NodejsFunction(this, "presignedUrlLambda", {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: bundlingAssetLambdaCode,
+      environment: {
+        BUCKET_NAME: bucket.bucketName,
+      },
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: cdk.Duration.seconds(10),
@@ -62,6 +81,10 @@ export class BlogPhotoHostingStack extends cdk.Stack {
 
     const userPoolClient = new cognito.UserPoolClient(this, "UserPoolClient", {
       userPool,
+      authFlows: {
+        userPassword: true, // user login with password
+        adminUserPassword: true,
+      }
     });
 
     const api = new apigateway.RestApi(this, "BlogPhotoApi", {

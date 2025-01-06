@@ -33,6 +33,9 @@
     "typescript-eslint": "^8.3.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.722.0",
+    "@aws-sdk/s3-request-presigner": "^3.722.0",
+    "aws-sdk": "^2.1692.0",
     "aws-xray-sdk": "^3.9.0",
     "aws-xray-sdk-core": "^3.9.0",
     "dotenv": "^16.4.5",
