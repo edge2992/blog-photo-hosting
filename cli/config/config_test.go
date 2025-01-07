@@ -5,16 +5,29 @@ import (
 	"path/filepath"
 	"s3-uploader/config"
 	"testing"
+	"time"
+
+	"github.com/golang-jwt/jwt"
 )
+
+func generateMockToken(expiration time.Time) string {
+	claims := jwt.MapClaims{
+		"exp": expiration.Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodNone, claims)
+	signedToken, _ := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
+	return signedToken
+}
 
 func TestLoadConfig_Success(t *testing.T) {
 	testPath := filepath.Join(os.TempDir(), "test-config.json")
+	validToken := generateMockToken(time.Now().Add(time.Hour))
 	testConfig := &config.Config{
 		ClientID:    "test-client-id",
 		Username:    "test-username",
 		Password:    "test-password",
 		APIEndpoint: "test-api-endpoint",
-		IDToken:     "test-id-token",
+		IDToken:     validToken,
 	}
 	if err := config.SaveConfig(testPath, testConfig); err != nil {
 		t.Fatalf("failed to save test config: %v", err)

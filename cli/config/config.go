@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"s3-uploader/cognito"
 )
 
 type Config struct {
@@ -25,6 +26,21 @@ func LoadConfig(configPath string) (*Config, error) {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
+
+	if cognito.IsTokenExpired(cfg.IDToken) {
+		idToken, err := cognito.AuthenticateWithCognito(cfg.ClientID, cfg.Username, cfg.Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to refresh ID token: %w", err)
+		}
+
+		cfg.IDToken = idToken
+		if err := SaveConfig(configPath, &cfg); err != nil {
+			return nil, fmt.Errorf("failed to save updated config: %w", err)
+		}
+
+		fmt.Println("ID token refreshed")
+	}
+
 	return &cfg, nil
 }
 
