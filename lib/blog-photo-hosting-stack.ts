@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import {
   aws_apigateway as apigateway,
   aws_cognito as cognito,
+  aws_cloudfront as cloudfront,
+  aws_cloudfront_origins as origin,
   aws_lambda as lambda,
   aws_logs as logs,
   aws_s3 as s3,
@@ -20,6 +22,14 @@ export class BlogPhotoHostingStack extends cdk.Stack {
       versioned: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+    });
+
+    const distribution = new cloudfront.Distribution(this, "Distribution", {
+      defaultBehavior: {
+        origin: origin.S3BucketOrigin.withOriginAccessControl(bucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      defaultRootObject: "index.html",
     });
 
     const presignedUrlPolicy = new iam.PolicyStatement({
@@ -106,5 +116,6 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url });
     new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
     new cdk.CfnOutput(this, "UserPoolClientId", { value: userPoolClient.userPoolClientId });
+    new cdk.CfnOutput(this, "CloudFrontUrl", { value: distribution.distributionDomainName });
   }
 }

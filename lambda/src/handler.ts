@@ -19,7 +19,6 @@ export const handler = async (
       body: JSON.stringify({ message: "Internal Server Error" }),
     };
   }
-  console.log("Received event:", JSON.stringify(event, null, 2));
 
   const objectKey = event.queryStringParameters?.key || "default-object-key";
   const expiration = parseInt(
