@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	ClientID    string `json:"client_id"`
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	APIEndpoint string `json:"api_endpoint"`
-	IDToken     string `json:"id_token"`
+	ClientID         string `json:"client_id"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	APIEndpoint      string `json:"api_endpoint"`
+	IDToken          string `json:"id_token"`
+	CloudFrontDomain string `json:"cloudfront_domain"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {

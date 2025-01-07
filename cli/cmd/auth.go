@@ -32,6 +32,9 @@ var authCmd = &cobra.Command{
 			fmt.Print("Enter API Endpoint: ")
 			fmt.Scan(&cfg.APIEndpoint)
 
+			fmt.Print("Enter CloudFront Domain: (eg.. abcdef.cloudfront.net): ")
+			fmt.Scan(&cfg.CloudFrontDomain)
+
 			// Authenticate to verify credentials
 			token, err := cognito.AuthenticateWithCognito(cfg.ClientID, cfg.Username, cfg.Password)
 			if err != nil {

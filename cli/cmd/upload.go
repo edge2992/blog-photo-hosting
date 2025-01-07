@@ -28,13 +28,16 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to get pre-signed URL: %v", err)
 		}
-		fmt.Printf("Pre-Signed URL: %s\n", preSignedURL)
 
 		err = upload.UploadFileToS3(preSignedURL, filePath)
 		if err != nil {
 			log.Fatalf("failed to upload file to S3: %v", err)
 		}
+
+		cloudFrontURL := fmt.Sprintf("https://%s/%s", cfg.CloudFrontDomain, s3Key)
+
 		fmt.Println("Successfully uploaded file to S3")
+		fmt.Printf("CloudFront URL: %s\n", cloudFrontURL)
 	},
 }
 
