@@ -57,7 +57,7 @@ export class BlogPhotoHostingStack extends cdk.Stack {
             [
               "export npm_config_cache=$(mktemp -d)",
               "npm i",
-              "npx esbuild src/handler.ts --platform=node --bundle --outfile=index.js",
+              "npx esbuild src/presigned-url-handler.ts --platform=node --bundle --outfile=index.js",
               "cp index.js /asset-output/",
             ].join(" && "),
           ],
