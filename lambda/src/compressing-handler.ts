@@ -1,12 +1,10 @@
 import { S3Event } from "aws-lambda";
-import {
-  generateCompressedKey,
-  processImage,
-  resizeImage,
-} from "utils/image-utils";
+import { invalidateCache } from "utils/cloudfront-utils";
+import { processImage, resizeImage } from "utils/image-utils";
 import { fetchImageFromS3, uploadToS3 } from "utils/s3-utils";
 
 const DESTINATION_BUCKET = process.env.DESTINATION_BUCKET;
+const CLOUDFRONT_DISTRIBUTION_ID = process.env.CLOUDFRONT_DISTRIBUTION_ID;
 
 export const handler = async (event: S3Event): Promise<void> => {
   try {
@@ -18,23 +16,34 @@ export const handler = async (event: S3Event): Promise<void> => {
     const bucket = record.s3.bucket.name;
     const key = decodeURIComponent(record.s3.object.key);
 
-    console.log(`Processing S3 object: ${bucket}/${key}`);
+    console.info(`Processing S3 object: ${bucket}/${key}`);
 
     const imageBuffer = await fetchImageFromS3(bucket, key);
-    const { sharpInstance, outputExtension } = processImage(key, imageBuffer);
+    const { sharpInstance, outputExtension, skipCompression } = processImage(
+      key,
+      imageBuffer,
+    );
+
+    if (skipCompression) {
+      console.error(`Skipping compression for: ${key}`);
+      return;
+    }
+
+    if (!sharpInstance) {
+      throw new Error(
+        "sharpInstance is null. This should not happen if skipCompression is false",
+      );
+    }
+
     const compressedImage = await resizeImage(sharpInstance);
 
-    const compressedKey = generateCompressedKey(key, outputExtension);
-    await uploadToS3(
-      DESTINATION_BUCKET,
-      compressedKey,
-      compressedImage,
-      outputExtension,
-    );
+    await uploadToS3(DESTINATION_BUCKET, key, compressedImage, outputExtension);
 
-    console.log(
-      `Compressed image uploaded to: ${DESTINATION_BUCKET}/${compressedKey}`,
-    );
+    console.info(`Compressed image uploaded to: ${DESTINATION_BUCKET}/${key}`);
+
+    if (CLOUDFRONT_DISTRIBUTION_ID) {
+      invalidateCache(CLOUDFRONT_DISTRIBUTION_ID, [`/${key}`]);
+    }
   } catch (error) {
     console.error("Error:", error);
     throw error;
