@@ -26,20 +26,34 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     });
 
     const compressedBucket = new s3.Bucket(this, "CompressedBucket", {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
       versioned: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
 
-    const distribution = new cloudfront.Distribution(this, "Distribution", {
-      defaultBehavior: {
-        origin: origin.S3BucketOrigin.withOriginAccessControl(uploadBucket),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-      defaultRootObject: "index.html",
+    const logBucket = new s3.Bucket(this, "CloudFrontLogBucket", {
+      versioned: false,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      publicReadAccess: false,
+      accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
     });
 
+    const distribution = new cloudfront.Distribution(this, "Distribution", {
+      defaultBehavior: {
+        origin: new origin.OriginGroup({
+          primaryOrigin: origin.S3BucketOrigin.withOriginAccessControl(compressedBucket),
+          fallbackOrigin: origin.S3BucketOrigin.withOriginAccessControl(uploadBucket),
+          fallbackStatusCodes: [404],
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      logBucket: logBucket,
+      logIncludesCookies: true,
+      logFilePrefix: "cloudfront-logs/*",
+    });
 
     const presignedUrlPolicy = new iam.PolicyStatement({
       actions: ["s3:PutObject"],
@@ -174,6 +188,7 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     )
 
     new cdk.CfnOutput(this, "BucketName", { value: uploadBucket.bucketName });
+    new cdk.CfnOutput(this, "LogBucketName", { value: logBucket.bucketName });
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url });
     new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
     new cdk.CfnOutput(this, "UserPoolClientId", { value: userPoolClient.userPoolClientId });
