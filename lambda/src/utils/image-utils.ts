@@ -1,13 +1,20 @@
 import sharp, { Sharp } from "sharp";
 import { extname } from "path";
 
+interface ProcessImageResult {
+  sharpInstance: Sharp | null; // null if compression is skipped
+  outputExtension: string;
+  skipCompression: boolean;
+}
+
 export const processImage = (
   key: string,
   imageBuffer: Buffer,
-): { sharpInstance: Sharp; outputExtension: string } => {
+): ProcessImageResult => {
   const inputExtension = extname(key).toLowerCase();
   let outputExtension = "jpeg";
   let sharpInstance = sharp(imageBuffer);
+  let skipCompression = false;
 
   switch (inputExtension) {
     case ".jpeg":
@@ -24,21 +31,16 @@ export const processImage = (
       break;
     case ".gif":
       console.log("GIF format detected, skipping compression");
-      throw new Error("GIF compression is not supported");
+      skipCompression = true;
+      break;
     default:
-      throw new Error(`Unsupported file format: ${inputExtension}`);
+      console.log(`Unsupported file format: ${inputExtension}`);
+      skipCompression = true;
   }
 
-  return { sharpInstance, outputExtension };
+  return { sharpInstance, outputExtension, skipCompression };
 };
 
 export const resizeImage = async (sharpInstance: Sharp): Promise<Buffer> => {
   return sharpInstance.resize({ width: 800 }).toBuffer();
-};
-
-export const generateCompressedKey = (
-  key: string,
-  extension: string,
-): string => {
-  return key.replace(/\.[^/.]+$/, `.${extension}`);
 };

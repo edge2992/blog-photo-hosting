@@ -1,9 +1,5 @@
 import { S3Event } from "aws-lambda";
-import {
-  generateCompressedKey,
-  processImage,
-  resizeImage,
-} from "utils/image-utils";
+import { processImage, resizeImage } from "utils/image-utils";
 import { fetchImageFromS3, uploadToS3 } from "utils/s3-utils";
 
 const DESTINATION_BUCKET = process.env.DESTINATION_BUCKET;
@@ -21,20 +17,27 @@ export const handler = async (event: S3Event): Promise<void> => {
     console.log(`Processing S3 object: ${bucket}/${key}`);
 
     const imageBuffer = await fetchImageFromS3(bucket, key);
-    const { sharpInstance, outputExtension } = processImage(key, imageBuffer);
+    const { sharpInstance, outputExtension, skipCompression } = processImage(
+      key,
+      imageBuffer,
+    );
+
+    if (skipCompression) {
+      console.log(`Skipping compression for: ${key}`);
+      return;
+    }
+
+    if (!sharpInstance) {
+      throw new Error(
+        "sharpInstance is null. This should not happen if skipCompression is false",
+      );
+    }
+
     const compressedImage = await resizeImage(sharpInstance);
 
-    const compressedKey = generateCompressedKey(key, outputExtension);
-    await uploadToS3(
-      DESTINATION_BUCKET,
-      compressedKey,
-      compressedImage,
-      outputExtension,
-    );
+    await uploadToS3(DESTINATION_BUCKET, key, compressedImage, outputExtension);
 
-    console.log(
-      `Compressed image uploaded to: ${DESTINATION_BUCKET}/${compressedKey}`,
-    );
+    console.log(`Compressed image uploaded to: ${DESTINATION_BUCKET}/${key}`);
   } catch (error) {
     console.error("Error:", error);
     throw error;
