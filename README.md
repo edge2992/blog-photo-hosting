@@ -61,6 +61,24 @@ To deploy this service, follow these steps:
 
 ---
 
+### **Configuration**
+
+you will need to create a `parameters.ts` file that holds the configuration for your slack workspace.
+
+create a `parameters.ts` file in the root directory of the project and add the following content:
+
+```typescript
+import { SlackConfig } from "./parameters.types";
+
+export const slackParams: SlackConfig = {
+  slackChannelConfigurationName: "my-app-alerts",
+  slackWorkspaceId: "TXXXXXXXXXX",
+  slackChannelId: "CXXXXXXXXXX",
+};
+```
+
+---
+
 ### **Deployment Steps**
 
 1. **Deploy the Stack**:
