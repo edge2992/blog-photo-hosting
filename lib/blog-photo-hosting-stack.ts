@@ -166,6 +166,7 @@ export class BlogPhotoHostingStack extends cdk.Stack {
       code: bundlingAssetLambdaCodeCompress,
       environment: {
         DESTINATION_BUCKET: compressedBucket.bucketName,
+        CLOUDFRONT_DISTRIBUTION_ID: distribution.distributionId,
       },
       architecture: lambda.Architecture.X86_64,
       memorySize: 512,

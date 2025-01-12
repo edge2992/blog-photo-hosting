@@ -1,8 +1,10 @@
 import { S3Event } from "aws-lambda";
+import { invalidateCache } from "utils/cloudfront-utils";
 import { processImage, resizeImage } from "utils/image-utils";
 import { fetchImageFromS3, uploadToS3 } from "utils/s3-utils";
 
 const DESTINATION_BUCKET = process.env.DESTINATION_BUCKET;
+const CLOUDFRONT_DISTRIBUTION_ID = process.env.CLOUDFRONT_DISTRIBUTION_ID;
 
 export const handler = async (event: S3Event): Promise<void> => {
   try {
@@ -38,6 +40,10 @@ export const handler = async (event: S3Event): Promise<void> => {
     await uploadToS3(DESTINATION_BUCKET, key, compressedImage, outputExtension);
 
     console.info(`Compressed image uploaded to: ${DESTINATION_BUCKET}/${key}`);
+
+    if (CLOUDFRONT_DISTRIBUTION_ID) {
+      invalidateCache(CLOUDFRONT_DISTRIBUTION_ID, [`/${key}`]);
+    }
   } catch (error) {
     console.error("Error:", error);
     throw error;
