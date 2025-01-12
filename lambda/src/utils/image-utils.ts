@@ -30,11 +30,11 @@ export const processImage = (
       outputExtension = "webp";
       break;
     case ".gif":
-      console.log("GIF format detected, skipping compression");
+      console.info("GIF format detected, skipping compression");
       skipCompression = true;
       break;
     default:
-      console.log(`Unsupported file format: ${inputExtension}`);
+      console.info(`Unsupported file format: ${inputExtension}`);
       skipCompression = true;
   }
 

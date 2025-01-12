@@ -10,8 +10,8 @@ export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   const bucketName = process.env.BUCKET_NAME;
-  console.log("BUCKET_NAME:", bucketName);
-  console.log("AWS_REGION:", region);
+  console.info("BUCKET_NAME:", bucketName);
+  console.info("AWS_REGION:", region);
   if (!bucketName) {
     console.error("BUCKET_NAME is not set");
     return {
@@ -40,7 +40,7 @@ export const handler = async (
       Key: objectKey,
     });
     const url = await getSignedUrl(client, command, { expiresIn: expiration });
-    console.log("Generated URL:", url);
+    console.info("Generated URL:", url);
 
     return {
       statusCode: 200,

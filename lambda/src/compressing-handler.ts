@@ -14,7 +14,7 @@ export const handler = async (event: S3Event): Promise<void> => {
     const bucket = record.s3.bucket.name;
     const key = decodeURIComponent(record.s3.object.key);
 
-    console.log(`Processing S3 object: ${bucket}/${key}`);
+    console.info(`Processing S3 object: ${bucket}/${key}`);
 
     const imageBuffer = await fetchImageFromS3(bucket, key);
     const { sharpInstance, outputExtension, skipCompression } = processImage(
@@ -23,7 +23,7 @@ export const handler = async (event: S3Event): Promise<void> => {
     );
 
     if (skipCompression) {
-      console.log(`Skipping compression for: ${key}`);
+      console.error(`Skipping compression for: ${key}`);
       return;
     }
 
@@ -37,7 +37,7 @@ export const handler = async (event: S3Event): Promise<void> => {
 
     await uploadToS3(DESTINATION_BUCKET, key, compressedImage, outputExtension);
 
-    console.log(`Compressed image uploaded to: ${DESTINATION_BUCKET}/${key}`);
+    console.info(`Compressed image uploaded to: ${DESTINATION_BUCKET}/${key}`);
   } catch (error) {
     console.error("Error:", error);
     throw error;
