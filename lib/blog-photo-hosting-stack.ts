@@ -19,6 +19,7 @@ import {
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import { join } from 'path';
+import { slackParams } from '../parameters';
 
 export class BlogPhotoHostingStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -189,15 +190,23 @@ export class BlogPhotoHostingStack extends cdk.Stack {
     uploadBucket.grantReadWrite(compressedLambda);
     compressedBucket.grantPut(compressedLambda);
 
+    compressedLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["cloudfront:CreateInvalidation"],
+        resources: ["*"],
+      })
+    );
+
     uploadBucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
       new s3Notifications.LambdaDestination(compressedLambda),
     )
 
     const slack = new chatbot.SlackChannelConfiguration(this, "Chatbot", {
-      slackChannelConfigurationName: "blog-photo-hosting-alerts",
-      slackWorkspaceId: "T01055Q6QLT",
-      slackChannelId: "C0887JZKW3X"
+      slackChannelConfigurationName: slackParams.slackChannelConfigurationName,
+      slackWorkspaceId: slackParams.slackWorkspaceId,
+      slackChannelId: slackParams.slackChannelId,
     });
 
     const topic = new sns.Topic(this, "ErrorTopic", {
