@@ -194,7 +194,13 @@ export class BlogPhotoHostingStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["cloudfront:CreateInvalidation"],
-        resources: ["*"],
+        resources: [
+          cdk.Stack.of(this).formatArn({
+            service: "cloudfront",
+            resource: "distribution",
+            resourceName: distribution.distributionId,
+          }),
+        ]
       })
     );
 
